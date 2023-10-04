@@ -1,6 +1,6 @@
 # Лабораторная работа №2 . Классы
 
-![image](https://github.com/Hsbnn/LROOPLabs/assets/116022974/edc7d055-563c-4291-add5-d2a323aef7be)
+![image](https://github.com/Hsbnn/LROOPLabs/assets/116022974/6723748c-1699-40e1-a70d-b9d2b39941f9)
 
 ### Вариант 5
 
