@@ -7,6 +7,18 @@ TEST(lessGreatEq, test_01)
     ASSERT_TRUE( th1 == th );
 }
 
+TEST(lessGreatEq, test_00)
+{
+    Three th1, th;
+    ASSERT_TRUE( th1 == th );
+}
+
+TEST(lessGreatEq, test_000)
+{
+    Three th1("10"), th;
+    ASSERT_FALSE( th1 == th );
+}
+
 TEST(lessGreatEq, test_02)
 {
     Three th1("10"), th("201");
@@ -27,7 +39,7 @@ TEST(lessGreatEq, test_04)
 
 TEST(lessGreatEq, test_05)
 {
-    Three th1("0"), th("200");
+    Three th1("0"), th = {'2','0','0'};
     ASSERT_TRUE( th1 < th );
 }
 
@@ -59,10 +71,16 @@ TEST(lessGreatEq, test_09)
     ASSERT_TRUE( th1 == th );
 }
 
-/*TEST(lessGreatEq, test_10)
+TEST(lessGreatEq, test_10)
 {
-    
-}*/
+    Three th(3, '1');
+    Three thh(3, '1');
+    Three th1;
+    Three t;
+    th1 = std::move(th);
+    ASSERT_TRUE( th1 == thh );
+    ASSERT_TRUE( th == t );
+}
 
 TEST(PlusMinus, test_1)
 {
@@ -129,10 +147,19 @@ TEST(PlusMinus, test_9)
     ASSERT_TRUE( th1 - th == ths );
 }
 
-/*TEST(PlusMinus, test_10)
+TEST(PlusMinus, test_10)
 {
-    
-}*/
+    Three th1(4,'2'), th;
+    Three ths("2222");
+    ASSERT_TRUE( th1 - th == ths );
+}
+
+TEST(PlusMinus, test_11)
+{
+    Three th1(4,'2'), th;
+    Three ths("2222");
+    ASSERT_TRUE( th1 + th == ths );
+}
 
 
 int main(int argc, char **argv) {
