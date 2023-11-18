@@ -1,5 +1,9 @@
 ## Лабораторная работа №5. Итераторы и аллокаторы
 
+
+![image](https://github.com/Hsbnn/LROOPLabs/assets/116022974/59e8c69b-f03c-4326-9d4c-47ab0b4b7dcc)
+
+
 ### 5. Очередь, std::vector
 
 
