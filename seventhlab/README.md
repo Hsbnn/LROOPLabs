@@ -3,6 +3,15 @@
 
 ### {Асинхронное программирование} 
 
+```c++
+std::lock_guard<std::mutex> lck(print_mutex);
+```
+```c++
+std::this_thread::sleep_for(1s);
+```
+```c++
+std::lock_guard<std::shared_mutex> lock(mtx);
+```
 
 #### Вариант 5
 
