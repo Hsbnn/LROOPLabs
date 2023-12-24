@@ -4,33 +4,32 @@
 #include "bear.hpp"
 
 #include <sstream>
+#include <atomic>
 #include <thread>
-#include <mutex>
-#include <chrono>
-#include <queue>
 #include <optional>
 #include <array>
+#include <chrono>
+#include <queue>
+#include <mutex>
+
 
 using namespace std::chrono_literals;
 std::mutex print_mutex;
 
 // Text Observer
-class TextObserver : public IFightObserver
-{
+class TextObserver : public IFightObserver {
 private:
     TextObserver(){};
 
 public:
-    static std::shared_ptr<IFightObserver> get()
-    {
+    static std::shared_ptr<IFightObserver> get() {
         static TextObserver instance;
         return std::shared_ptr<IFightObserver>(&instance, [](IFightObserver *) {});
     }
 
-    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override
-    {
-        if (win)
-        {
+    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override {
+        if (win) {
+            std::lock_guard<std::mutex> lck(print_mutex);
             std::cout << std::endl
                       << "Murder -------- 👊" << std::endl;
             attacker->print();
@@ -39,45 +38,12 @@ public:
     }
 };
 
-class F_Observer : public IFightObserver
-{
-private:
-    std::ofstream file;
-
-    F_Observer()
-    {
-        file.open("log.txt");
-    }
-
-public:
-    static std::shared_ptr<IFightObserver> get()
-    {
-        static std::shared_ptr<IFightObserver> instance(new F_Observer());
-        return instance;
-    }
-
-    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override
-    {
-        if (win)
-        {
-            file << std::endl
-                 << "Murder -------- 👊" << std::endl;
-            attacker->print(file);
-            defender->print(file);
-        }
-    }
-};
-
-
-
 
 // Фабрики -----------------------------------
-std::shared_ptr<NPC> factory(std::istream &is)
-{
+std::shared_ptr<NPC> factory(std::istream &is) {
     std::shared_ptr<NPC> result;
     int type{0};
-    if (is >> type)
-    {
+    if (is >> type) {
         switch (type)
         {
         case RobberType:
@@ -94,17 +60,14 @@ std::shared_ptr<NPC> factory(std::istream &is)
     else
         std::cerr << "unexpected NPC type:" << type << std::endl;
 
-    if (result){
+    if (result)
         result->subscribe(TextObserver::get());
-        result->subscribe(F_Observer::get());
-    }
     return result;
 }
 
-std::shared_ptr<NPC> factory(NpcType type, int x, int y)
-{
+std::shared_ptr<NPC> factory(NpcType type, int x, int y) {
     std::shared_ptr<NPC> result;
-    switch (type)
+     switch (type)
     {
     case RobberType:
         result = std::make_shared<Robber>(x, y);
@@ -118,16 +81,13 @@ std::shared_ptr<NPC> factory(NpcType type, int x, int y)
     default:
         break;
     }
-    if (result){
+    if (result)
         result->subscribe(TextObserver::get());
-        result->subscribe(F_Observer::get());
-    }
     return result;
 }
 
 // save array to file
-void save(const set_t &array, const std::string &filename)
-{
+void save(const set_t &array, const std::string &filename) {
     std::ofstream fs(filename);
     fs << array.size() << std::endl;
     for (auto &n : array)
@@ -136,8 +96,7 @@ void save(const set_t &array, const std::string &filename)
     fs.close();
 }
 
-set_t load(const std::string &filename)
-{
+set_t load(const std::string &filename) {
     set_t result;
     std::ifstream is(filename);
     if (is.good() && is.is_open())
@@ -154,16 +113,13 @@ set_t load(const std::string &filename)
 }
 
 // print to screen
-std::ostream &operator<<(std::ostream &os, const set_t &array)
-{
+std::ostream &operator<<(std::ostream &os, const set_t &array) {
     for (auto &n : array)
         n->print();
     return os;
 }
 
-
-set_t fight(const set_t &array, size_t distance)
-{
+set_t fight(const set_t &array, size_t distance) {
     set_t dead_list;
 
     for (const auto &attacker : array)
@@ -187,9 +143,7 @@ set_t fight(const set_t &array, size_t distance)
     return dead_list;
 }
 
-
-struct print : std::stringstream
-{
+struct print : std::stringstream {
     ~print()
     {
         static std::mutex mtx;
@@ -200,15 +154,13 @@ struct print : std::stringstream
 };
 
 
-struct FightEvent
-{
+bool k = true, m = true;
+struct FightEvent {
     std::shared_ptr<NPC> attacker;
     std::shared_ptr<NPC> defender;
 };
 
-
-class FightManager
-{
+class FightManager {
 private:
     std::queue<FightEvent> events;
     std::shared_mutex mtx;
@@ -216,45 +168,37 @@ private:
     FightManager() {}
 
 public:
-    static FightManager &get()
-    {
+    static FightManager &get() {
         static FightManager instance;
         return instance;
     }
 
-    void add_event(FightEvent &&event)
-    {
+    void add_event(FightEvent &&event) {
         std::lock_guard<std::shared_mutex> lock(mtx);
         events.push(event);
     }
 
-    void operator()()
-    {
-        while (true)
-        {
+    void operator()() {
+        while (k) { 
             {
                 std::optional<FightEvent> event;
 
                 {
                     std::lock_guard<std::shared_mutex> lock(mtx);
-                    if (!events.empty())
-                    {
+                    if (!events.empty()) {
                         event = events.back();
                         events.pop();
                     }
                 }
 
-                if (event)
-                {
-                    try
-                    {
+                if (event) {
+                    try {
                         if (event->attacker->is_alive())     // no zombie fighting!
                             if (event->defender->is_alive()) // already dead!
                                 if (event->defender->accept(event->attacker))
                                     event->defender->must_die();
                     }
-                    catch (...)
-                    {
+                    catch (...) {
                         std::lock_guard<std::shared_mutex> lock(mtx);
                         events.push(*event);
                     }
@@ -266,15 +210,11 @@ public:
     }
 };
 
-
-
-
-int main()
-{
+int main() {
     set_t array; // монстры
 
-    const int MAX_X{100};
-    const int MAX_Y{100};
+    const int MAX_X{500};
+    const int MAX_Y{500};
     const int DISTANCE{40};
 
     // Генерируем начальное распределение монстров
@@ -282,8 +222,7 @@ int main()
     for (size_t i = 0; i < 10; ++i)
         array.insert(factory(NpcType(std::rand() % 3 + 1),
                              std::rand() % 500,
-                             std::rand() % 500)); // х и у до 500
-
+                             std::rand() % 500));
 
     // std::cout << "Saving ... 😍 " << std::endl;
 
@@ -294,23 +233,21 @@ int main()
 
     // array = load("npc.txt");
 
-    std::cout << "Starting list:" << std::endl
+    std::cout << "Starting list 😍 :" << std::endl
               << array;
 
     std::thread fight_thread(std::ref(FightManager::get()));
 
-    std::thread move_thread([&array, MAX_X, MAX_Y, DISTANCE]()
-     {
-            while (true)
-            {
+    int count = 0;
+    std::thread move_thread([&array, MAX_X, MAX_Y, DISTANCE, &count]() {
+            while (m) {
                 // move phase
-                for (std::shared_ptr<NPC> npc : array)
-                {
-                        if(npc->is_alive()){
-                            int shift_x = std::rand() % 20 - 10;
-                            int shift_y = std::rand() % 20 - 10;
-                            npc->move(shift_x, shift_y, MAX_X, MAX_Y);
-                        }
+                for (std::shared_ptr<NPC> npc : array) {
+                    if(npc->is_alive()){
+                        int shift_x = std::rand() % 20 - 10;
+                        int shift_y = std::rand() % 20 - 10;
+                        npc->move(shift_x, shift_y, MAX_X, MAX_Y);
+                    }
                 }
                 // lets fight
                 for (std::shared_ptr<NPC> npc : array)
@@ -322,15 +259,14 @@ int main()
                                 FightManager::get().add_event({npc, other});
 
                 std::this_thread::sleep_for(1s);
+                ++count;
             } });
 
-while (true)
-    {
-        const int grid{20}, step_x{MAX_X / grid}, step_y{MAX_Y / grid};
-        {
+    int now = 0, end = 50;
+    while (now < end) {
+        const int grid{20}, step_x{MAX_X / grid}, step_y{MAX_Y / grid}; {
             std::array<char, grid * grid> fields{0};
-            for (std::shared_ptr<NPC> npc : array)
-            {
+            for (std::shared_ptr<NPC> npc : array) {
                 auto [x, y] = npc->position();
                 int i = x / step_x;
                 int j = y / step_y;
@@ -357,11 +293,12 @@ while (true)
                     fields[i + grid * j] = '.';
             }
 
+            if(count > 40) {
+                break;
+            }
             std::lock_guard<std::mutex> lck(print_mutex);
-            for (int j = 0; j < grid; ++j)
-            {
-                for (int i = 0; i < grid; ++i)
-                {
+            for (int j = 0; j < grid; ++j) {
+                for (int i = 0; i < grid; ++i) {
                     char c = fields[i + j * grid];
                     if (c != 0)
                         std::cout << "[" << c << "]";
@@ -373,8 +310,10 @@ while (true)
             std::cout << std::endl;
         }
         std::this_thread::sleep_for(1s);
-    };
+        now += 1;
+    }
 
+    k = false; m = false;
     move_thread.join();
     fight_thread.join();
 
