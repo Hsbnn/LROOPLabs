@@ -5,29 +5,24 @@
 Robber::Robber(int x, int y) : NPC(RobberType, x, y) {}
 Robber::Robber(std::istream &is) : NPC(RobberType, is) {}
 
+
+bool Robber::accept(std::shared_ptr<NPC> visitor) {
+    return visitor->fight(std::shared_ptr<Robber>(this,[](Robber*){}));
+}
+
 void Robber::print()
 {
     std::cout << *this;
+}
+
+void Robber::print(std::ostream &outfs) {
+    outfs << *this;
 }
 
 void Robber::save(std::ostream &os)
 {
     os << RobberType << std::endl;
     NPC::save(os);
-}
-
-// bool Robber::is_robber() const
-// {
-//     return true;
-// }
-
-void Robber::print(std::ostream &outfs) {
-    outfs << *this;
-}
-
-bool Robber::accept(std::shared_ptr<NPC> visitor) {
-    std::shared_ptr<Robber> This = std::make_shared<Robber>(*this);
-    return visitor->visit(This);
 }
 
 bool Robber::fight(std::shared_ptr<Bear> other)
