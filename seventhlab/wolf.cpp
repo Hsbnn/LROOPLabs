@@ -10,24 +10,20 @@ void Wolf::print()
     std::cout << *this;
 }
 
-void Wolf::save(std::ostream &os)
-{
-    os << WolfType << std::endl;
-    NPC::save(os);
-}
-
-// bool Wolf::is_wolf() const
-// {
-//     return true;
-// }
-
 void Wolf::print(std::ostream &outfs) {
     outfs << *this;
 }
 
 bool Wolf::accept(std::shared_ptr<NPC> other) {
-    std::shared_ptr<Wolf> This = std::make_shared<Wolf>(*this);
-    return other->visit(This);
+    // std::shared_ptr<Wolf> This = std::make_shared<Wolf>(*this);
+    // return other->visit(This);
+    return other->fight(std::shared_ptr<Wolf>(this,[](Wolf*){}));
+}
+
+void Wolf::save(std::ostream &os)
+{
+    os << WolfType << std::endl;
+    NPC::save(os);
 }
 
 bool Wolf::fight(std::shared_ptr<Robber> other)
