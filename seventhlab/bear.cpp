@@ -10,19 +10,21 @@ void Bear::print()
     std::cout << *this;
 }
 
-// bool Bear::is_bear() const 
-// {
-//     return true;
-// }
-
 void Bear::print(std::ostream &outfs) {
     outfs << *this;
 }
 
 bool Bear::accept(std::shared_ptr<NPC> visitor) {
-    std::shared_ptr<Bear> This = std::make_shared<Bear>(*this);
-    return visitor->visit(This);
+    return visitor->fight(std::shared_ptr<Bear>(this,[](Bear*){}));
 }
+
+
+void Bear::save(std::ostream &os) 
+{
+    os << BearType << std::endl;
+    NPC::save(os);
+}
+
 
 bool Bear::fight(std::shared_ptr<Bear> other) 
 {
@@ -40,12 +42,6 @@ bool Bear::fight(std::shared_ptr<Wolf> other)
 {
     fight_notify(other, true);
     return true;
-}
-
-void Bear::save(std::ostream &os) 
-{
-    os << BearType << std::endl;
-    NPC::save(os);
 }
 
 std::ostream &operator<<(std::ostream &os, Bear &bear)
