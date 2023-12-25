@@ -50,7 +50,7 @@ public:
 
     void subscribe(std::shared_ptr<IFightObserver>observer );
     void fight_notify(const std::shared_ptr<NPC> defender, bool win);
-    virtual bool is_close(const std::shared_ptr<NPC> &other, size_t distance) const;
+    virtual bool is_close(const std::shared_ptr<NPC> &other, size_t distance);
 
     // virtual bool is_robber() const;
     // virtual bool is_wolf() const;
